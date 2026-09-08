@@ -10,8 +10,8 @@
 # fully offline build, run `cargo vendor` first and point CARGO_HOME at it.
 
 Name:           resonate
-Version:        0.1.0
-Release:        8%{?dist}
+Version:        0.2.0
+Release:        1%{?dist}
 Summary:        Soundboard with a virtual microphone and real-time mic effects
 
 License:        GPL-3.0-or-later
@@ -95,7 +95,24 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/%{appid}.desktop
 %{_datadir}/icons/hicolor/scalable/apps/%{appid}.svg
 
 %changelog
-* Tue Sep 08 2026 kilo2071 <74557968+kilo2071@users.noreply.github.com> - 0.1.0-8
+* Tue Sep 08 2026 kilo2071 <74557968+kilo2071@users.noreply.github.com> - 0.2.0-1
+- Effects are rebuilt around an LV2 host: installed LV2 plugins run through the
+  same interface as the built-ins, from a curated catalogue grouped into
+  "Voice & Cleanup" and "Character & Fun" (RNNoise suppression, compressor,
+  de-esser, limiter, parametric EQ; pitch shifting, auto-tune, ring modulator,
+  vocoder, reverb, delays, rotary speaker, chorus, flanger, phaser, saturator,
+  crusher, tape). Effects whose plugin is missing are simply not listed.
+- Every effect has a preset dropdown, and ten chain presets ship with the app
+  (Podcast, Broadcast, Noisy Room, Old Radio, Robot, Vocoder Robot, Demon,
+  Chipmunk, Stadium Announcer, Cathedral); chains can be saved, reordered and
+  switched from the tray, which marks the active one
+- Big effects show their important knobs first, with the rest under an
+  "All parameters" expander, and the same effect can be added more than once
+- New built-in effects: Distortion, Bitcrusher, Telephone
+- Per-sound settings (volume, start marker, trimming, fades) with a waveform
+  editor, LCD scrubbing and a live oscilloscope, search, tile reorder and
+  import normalisation
+- Global numpad hotkeys to trigger tiles via the GlobalShortcuts portal
 - New sounds are left where they are by default instead of being moved into the
   Sounds Folder (the setting is unchanged for existing installs)
 - "Play Multiple Sounds" now shows its saved state after a restart, rather than
