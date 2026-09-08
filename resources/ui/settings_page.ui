@@ -27,7 +27,7 @@
           <object class="AdwSwitchRow" id="move_files_row">
             <property name="title" translatable="yes">Move Added Files</property>
             <property name="subtitle" translatable="yes">Move new sounds into the Sounds Folder when added</property>
-            <property name="active">true</property>
+            <property name="active">false</property>
           </object>
         </child>
       </object>
