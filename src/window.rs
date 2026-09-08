@@ -1330,6 +1330,7 @@ impl ResonateWindow {
         ));
 
         // Polyphonic toggle → update engine
+        settings.imp().polyphonic_row.set_active(config.polyphonic);
         settings.imp().polyphonic_row.connect_active_notify(glib::clone!(
             #[weak(rename_to = win)]
             self,

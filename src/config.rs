@@ -100,7 +100,12 @@ impl SoundSettings {
     }
 }
 
+/// `#[serde(default)]` is on the struct, so a field missing from an older (or
+/// hand-edited) config.json falls back to `Config::default()` for that field
+/// alone instead of failing the whole parse — which used to cost the user their
+/// sounds map, tile order and saved presets. Add new fields freely.
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(default)]
 pub struct Config {
     pub sounds_folder: PathBuf,
     pub move_files_to_folder: bool,
@@ -121,28 +126,19 @@ pub struct Config {
 
     // Soundboard level into the virtual mic (balances sounds against the mic;
     // the monitor path uses monitor_volume instead)
-    #[serde(default = "default_unity")]
     pub soundboard_mic_volume: f32,
 
     // Per-sound settings keyed by file name (volume, start marker, start mode)
-    #[serde(default)]
     pub sounds: HashMap<String, SoundSettings>,
 
     // Tile order on the soundboard, as sound file names; unknown files sort after
-    #[serde(default)]
     pub sound_order: Vec<String>,
 
     // Named effect-chain presets
-    #[serde(default)]
     pub effect_presets: HashMap<String, Vec<EffectEntry>>,
 
     // Effect chain applied to mic input (gate → gain order)
-    #[serde(default = "default_effects_chain")]
     pub effects_chain: Vec<EffectEntry>,
-}
-
-fn default_unity() -> f32 {
-    1.0
 }
 
 fn default_effects_chain() -> Vec<EffectEntry> {
@@ -158,7 +154,7 @@ impl Default for Config {
             .unwrap_or_else(|| glib::home_dir().join("Documents"));
         Self {
             sounds_folder: docs.join("Sounds"),
-            move_files_to_folder: true,
+            move_files_to_folder: false,
             polyphonic: true,
             default_volume: 100,
             virtual_device_name: "Resonate Microphone".to_string(),
@@ -194,9 +190,35 @@ impl Config {
     pub fn load() -> Self {
         let path = Self::config_path();
         if path.exists() {
-            if let Ok(text) = std::fs::read_to_string(&path) {
-                if let Ok(cfg) = serde_json::from_str(&text) {
-                    return cfg;
+            let text = match std::fs::read_to_string(&path) {
+                Ok(text) => text,
+                Err(e) => {
+                    // Unreadable (permissions, a race) rather than invalid —
+                    // start from defaults for this run but leave the file be,
+                    // so the next run can still pick it up.
+                    log::warn!("Cannot read {}: {e}; using defaults", path.display());
+                    return Self::default();
+                }
+            };
+            match serde_json::from_str(&text) {
+                Ok(cfg) => return cfg,
+                Err(e) => {
+                    // With `#[serde(default)]` on the struct a missing field is
+                    // no longer fatal, so getting here means the file is really
+                    // corrupt. Move it aside instead of overwriting it — it
+                    // holds the sounds map, tile order and saved presets.
+                    let backup = path.with_extension("json.bak");
+                    match std::fs::rename(&path, &backup) {
+                        Ok(()) => log::warn!(
+                            "Config at {} is invalid ({e}); kept a copy at {} and started from defaults",
+                            path.display(),
+                            backup.display()
+                        ),
+                        Err(re) => log::warn!(
+                            "Config at {} is invalid ({e}) and could not be preserved ({re}); starting from defaults",
+                            path.display()
+                        ),
+                    }
                 }
             }
         }
@@ -268,6 +290,21 @@ mod tests {
             .map(|(n, c)| (n.to_string(), c.clone()))
             .collect();
         cfg
+    }
+
+    #[test]
+    fn a_config_missing_fields_keeps_the_rest() {
+        // The pre-`#[serde(default)]` struct failed the whole parse here, and
+        // `load()` then wrote defaults over the file.
+        let json = r#"{"sounds_folder":"/tmp/s","sound_order":["a.wav"]}"#;
+        let cfg: Config = serde_json::from_str(json).expect("partial config parses");
+        assert_eq!(cfg.sound_order, vec!["a.wav".to_string()]);
+        assert_eq!(cfg.sounds_folder, std::path::PathBuf::from("/tmp/s"));
+        // …and the absent fields fall back to Config::default() one by one.
+        assert_eq!(cfg.mic_volume, 1.0);
+        assert_eq!(cfg.soundboard_mic_volume, 1.0);
+        assert!(!cfg.move_files_to_folder);
+        assert!(chains_match(&cfg.effects_chain, &default_effects_chain()));
     }
 
     #[test]

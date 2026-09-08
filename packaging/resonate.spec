@@ -11,7 +11,7 @@
 
 Name:           resonate
 Version:        0.1.0
-Release:        7%{?dist}
+Release:        8%{?dist}
 Summary:        Soundboard with a virtual microphone and real-time mic effects
 
 License:        GPL-3.0-or-later
@@ -95,6 +95,14 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/%{appid}.desktop
 %{_datadir}/icons/hicolor/scalable/apps/%{appid}.svg
 
 %changelog
+* Tue Sep 08 2026 kilo2071 <74557968+kilo2071@users.noreply.github.com> - 0.1.0-8
+- New sounds are left where they are by default instead of being moved into the
+  Sounds Folder (the setting is unchanged for existing installs)
+- "Play Multiple Sounds" now shows its saved state after a restart, rather than
+  always appearing on
+- A settings file from an older version no longer resets every other setting,
+  and one that cannot be parsed is kept aside instead of being overwritten
+
 * Tue Sep 01 2026 kilo2071 <74557968+kilo2071@users.noreply.github.com> - 0.1.0-7
 - Chain presets now ship with the app: Podcast, Broadcast, Noisy Room, Old
   Radio, Robot, Vocoder Robot, Demon, Chipmunk, Stadium Announcer, Cathedral

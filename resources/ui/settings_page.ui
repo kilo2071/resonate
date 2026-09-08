@@ -55,7 +55,7 @@
           <object class="AdwSwitchRow" id="monitor_enabled_row">
             <property name="title" translatable="yes">Enable Monitor</property>
             <property name="subtitle" translatable="yes">Play soundboard audio on your speakers/headphones</property>
-            <property name="active">false</property>
+            <property name="active">true</property>
           </object>
         </child>
       </object>
